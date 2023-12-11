@@ -8,6 +8,7 @@ To be more specific,
 > 2. merged_anime_data.csv: dataset we used to create shiny app.
 > 3. app.R: to create shiny app with several interactive pages.
 > 4. Learn about anime preferences and trends.pdf: Data Nutrition Label (pdf).
+> 5. profiles.csv: sorry we did not use this one as prvious thought, just ignore this one
 
 
 DATA NUTRITION PROJECT: merged_anime_data.csv
