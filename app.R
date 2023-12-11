@@ -49,9 +49,10 @@ Analyzes the differences between highly rated and lowly rated anime and explains
              titlePanel("Anime Genre Distribution in High and Low Score Categories"),
              mainPanel(
                uiOutput("statsText"),
-               plotOutput("genrePlot"),
                p("This plot provides insight into the distribution of anime genres across high and low scoring animes. Explore how different genres perform in terms of viewer scores and see if certain genres are more likely to be rated higher or lower."),
-               htmlOutput("genreAnalysisText")
+               p(HTML("<strong> Interact with the score category in plot below to see detailed graph for filtering</strong>."), align = "center"),
+               plotlyOutput("genrePlotly"),  # Interactive Plotly charts
+               htmlOutput("genreAnalysisText")  # Display statistics for selected types
              )
            )
   ),
@@ -100,8 +101,9 @@ Analyzes the differences between highly rated and lowly rated anime and explains
 server <- function(input, output) {
   # intro picture
   output$introImage <- renderImage({
+    # Return a list containing the image path and other attributes like height and width
     list(
-      src = "intro_picture.png",  # 使用相对路径引用图片
+      src = "intro_picture.png",
       contentType = "image/png",
       width = "100%",
       height = "auto",
@@ -156,7 +158,7 @@ server <- function(input, output) {
       )
     
     HTML(paste(
-       "Some statistics:<br>",
+      "Some statistics:<br>",
       "For the High category:<br>",
       "The maximum count is ", stats_high$Max, 
       " for the genre ", stats_high$Max_Genre, ".<br>",
@@ -173,6 +175,52 @@ server <- function(input, output) {
     ))
   })
   
+
+  
+  # Create bar charts with Plotly
+  output$genrePlotly <- renderPlotly({
+    df_genre <- df %>%
+      count(genre, new_category) %>%
+      group_by(genre) %>%
+      mutate(total = sum(n)) %>%
+      ungroup()
+    
+    p <- ggplot(df_genre, aes(x = reorder(genre, total), y = n, fill = new_category)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      labs(x = "Genre", y = "Count", title = "Number of Animes by Genre and Score Category") +
+      scale_fill_discrete(name = "Score Category") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    
+    ggplotly(p, tooltip = "text")  # Add text alerts for mouse hover
+  })
+  
+  # Dynamically display statistics for selected types
+  output$selectedGenreStats <- renderUI({
+    genre_data <- event_data("plotly_click", source = "genrePlotly")
+    
+    if (!is.null(genre_data)) {
+      genre_name <- genre_data$x
+      genre_stats <- df %>%
+        filter(genre == genre_name) %>%
+        group_by(new_category) %>%
+        summarise(
+          Count = n(),
+          Mean = mean(Count),
+          Median = median(Count),
+          SD = sd(Count),
+          .groups = 'drop'
+        )
+      
+      renderText({
+        paste("Statistics for genre:", genre_name, "<br>",
+              "High category - Count:", genre_stats$Count[genre_stats$new_category == "High"], "<br>",
+              "Low category - Count:", genre_stats$Count[genre_stats$new_category == "Low"], "<br>")
+      })
+    } else {
+      renderText({"Click on a bar to see detailed statistics for a genre."})
+    }
+  })
+  
   output$genreAnalysisText <- renderUI({
     narrative <- HTML(paste(
       "<h3>Genre Analysis Narrative</h3>",
@@ -183,6 +231,8 @@ server <- function(input, output) {
     ))
     narrative
   })
+  
+  
   
   
   # Story 2: High vs Low Analysis
@@ -272,10 +322,4 @@ server <- function(input, output) {
 }
 
 
-shinyApp(
-  ui = ui,
-  server = server,
-  options = list(
-    port = 8888  
-  )
-)
+shinyApp(ui = ui, server = server)
