@@ -15,4 +15,4 @@ DATA NUTRITION PROJECT: merged_anime_data.csv
   > link: https://datanutrition.org/labels/v3/?id=7b1a03c9-e285-4ae0-9541-b4e70a3a1922
     - Still in approve when upload
 
-> publish url: https://801esu-gefei-shen.shinyapps.io/Final_Project201/
+> publish url: https://final120.shinyapps.io/final_project201/
